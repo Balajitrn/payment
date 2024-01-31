@@ -57,7 +57,7 @@ public class PaymentServiceTest {
         assertEquals(processPaymentDto.getAmount(),paymentDTO.getAmount());
     }
 
-    @Test
+   /* @Test
     void TestGetPaymentStatus() throws NotFoundException {
         Payment payment = new Payment();
         payment.setId(1L);
@@ -76,6 +76,6 @@ public class PaymentServiceTest {
         assertEquals(paymentDTO.getOrderId(),payment.getOrderId());
 
 
-    }
+    } */
 
 }

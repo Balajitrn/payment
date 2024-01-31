@@ -5,10 +5,10 @@ import com.eshop.payment.entity.Payment;
 import com.eshop.payment.repository.PaymentRepository;
 import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
+import java.util.List;
+import java.util.stream.Collectors;
 import javax.transaction.Transactional;
 
 @Service
@@ -39,16 +39,16 @@ public class PaymentService {
 
     /**
      * method to return status of a payment
-     * @param paymentId
+     * @param orderId
      * @return
      * @throws NotFoundException
      */
-    public PaymentDTO getPaymentStatus(Long paymentId) throws NotFoundException {
-        Optional<Payment> payment = paymentRepository.findById(paymentId);
-        if (payment.isPresent()){
-            return convertToDto(payment.get());
+    public List<PaymentDTO> getPaymentStatus(Long orderId) throws NotFoundException {
+        List<Payment> payment = paymentRepository.findByOrderIdOrderByCreatedAtDesc(orderId);
+        if (!payment.isEmpty()){
+            return payment.stream().map(e -> convertToDto(e)).collect(Collectors.toList());
         }else{
-            throw new NotFoundException("Payment Status not found "+paymentId);
+            throw new NotFoundException("Order Status not found "+orderId);
         }
 
     }
@@ -61,9 +61,26 @@ public class PaymentService {
      */
     @Transactional
     public PaymentDTO paymentRefund(PaymentDTO paymentDto) throws NotFoundException {
-        Payment refundPayment = convertToEntity(paymentDto);
-        Payment savePayment = paymentRepository.save(refundPayment);
-        return convertToDto(savePayment);
+       System.out.println(paymentDto.getOrderId());
+        PaymentDTO returnRefund = null;
+        List<Payment> status = paymentRepository.findByOrderIdOrderByCreatedAtDesc(paymentDto.getOrderId());
+        System.out.println("status  --- "+status.get(0));
+        if(!status.isEmpty()){
+            if(status.get(0).getStatus().equalsIgnoreCase("processed") ){
+
+                Payment refundPayment = convertToEntity(paymentDto);
+                Payment savePayment = paymentRepository.save(refundPayment);
+                returnRefund = convertToDto(savePayment);
+
+            }else{
+                return null;
+            }
+        }else {
+            throw new NotFoundException("Cannot be refunded. Order Status is  "+status.get(0).getStatus());
+
+        }
+
+        return returnRefund;
     }
 
     /**
