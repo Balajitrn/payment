@@ -2,6 +2,7 @@ package com.eshop.payment.service;
 
 import com.eshop.payment.dto.PaymentDTO;
 import com.eshop.payment.entity.Payment;
+import com.eshop.payment.enums.PaymentStatus;
 import com.eshop.payment.repository.PaymentRepository;
 import javassist.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -45,7 +46,7 @@ public class PaymentService {
      */
     public List<PaymentDTO> getPaymentStatus(Long orderId) throws NotFoundException {
         List<Payment> payment = paymentRepository.findByOrderIdOrderByCreatedAtDesc(orderId);
-        if (!payment.isEmpty()){
+        if (payment != null && !payment.isEmpty()){
             return payment.stream().map(e -> convertToDto(e)).collect(Collectors.toList());
         }else{
             throw new NotFoundException("Order Status not found "+orderId);
@@ -64,23 +65,21 @@ public class PaymentService {
        System.out.println(paymentDto.getOrderId());
         PaymentDTO returnRefund = null;
         List<Payment> status = paymentRepository.findByOrderIdOrderByCreatedAtDesc(paymentDto.getOrderId());
-        System.out.println("status  --- "+status.get(0));
         if(!status.isEmpty()){
-            if(status.get(0).getStatus().equalsIgnoreCase("processed") ){
+            if(status.get(0).getStatus().equalsIgnoreCase(String.valueOf(PaymentStatus.Processed)) ){
 
                 Payment refundPayment = convertToEntity(paymentDto);
                 Payment savePayment = paymentRepository.save(refundPayment);
                 returnRefund = convertToDto(savePayment);
+                return returnRefund;
 
             }else{
                 return null;
             }
         }else {
-            throw new NotFoundException("Cannot be refunded. Order Status is  "+status.get(0).getStatus());
-
+                 throw new NotFoundException("order id does not exist ");
         }
 
-        return returnRefund;
     }
 
     /**
